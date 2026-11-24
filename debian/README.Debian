@@ -1,0 +1,14 @@
+Ladybird for Debian - unofficial build
+======================================
+
+This package is made by VitexSoftware <info@vitexsoftware.cz>. It is not an
+official release of the Ladybird Browser Initiative. Please report packaging
+problems at https://github.com/Vitexus/ladybird, not upstream. Ladybird is a
+trademark of Ladybird Browser Initiative.
+
+The browser lives in /opt/ladybird. Differences from official builds: the
+built-in update check is off (update through apt) and Qt is bundled, because
+Debian trixie ships an older Qt than Ladybird needs.
+
+The source code of the bundled LGPL libraries is archived as
+third-party-sources.tar with each Jenkins build.

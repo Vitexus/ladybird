@@ -1,0 +1,82 @@
+Source: ladybird
+Section: web
+Priority: optional
+Maintainer: CyberVitexus <info@vitexsoftware.cz>
+Build-Depends:
+ debhelper-compat (= 13),
+ autoconf,
+ autoconf-archive,
+ automake,
+ bison,
+ build-essential,
+ ca-certificates,
+ clang-22,
+ cmake (>= 3.30),
+ curl,
+ file,
+ flex,
+ git,
+ glslang-tools,
+ libatspi2.0-dev,
+ libclang-rt-22-dev,
+ libdrm-dev,
+ libegl-dev,
+ libgl1-mesa-dev,
+ libglu1-mesa-dev,
+ libltdl-dev,
+ libncurses-dev,
+ libpulse-dev,
+ libstdc++-14-dev,
+ libtool,
+ libudev-dev,
+ libvulkan-dev,
+ libwayland-dev,
+ libx11-xcb-dev,
+ libxcb-cursor-dev,
+ libxcb-icccm4-dev,
+ libxcb-image0-dev,
+ libxcb-keysyms1-dev,
+ libxcb-randr0-dev,
+ libxcb-render-util0-dev,
+ libxcb-shape0-dev,
+ libxcb-sync-dev,
+ libxcb-util-dev,
+ libxcb-xfixes0-dev,
+ libxcb-xinput-dev,
+ libxcb-xkb-dev,
+ libxi-dev,
+ libxkbcommon-dev,
+ libxkbcommon-x11-dev,
+ libxrender-dev,
+ lld-22,
+ llvm-22,
+ nasm,
+ ninja-build,
+ patchelf,
+ pkg-config,
+ python3,
+ python3-venv,
+ tar,
+ unzip,
+ wayland-protocols,
+ xz-utils,
+ zip,
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://ladybird.org/
+Vcs-Git: https://github.com/Vitexus/ladybird.git
+Vcs-Browser: https://github.com/Vitexus/ladybird
+
+Package: ladybird
+Architecture: amd64
+Depends: ${misc:Depends}, ${shlibs:Depends}, fonts-liberation
+Recommends: libavcodec61
+Provides: www-browser, gnome-www-browser
+Description: independent web browser with its own engine (unofficial build)
+ Ladybird is a web browser with an engine written from scratch, driven by
+ web standards. This is alpha software with no security promises: do not
+ rely on it for sensitive browsing.
+ .
+ This package is built by VitexSoftware. It is NOT an official release of
+ the Ladybird Browser Initiative and is not endorsed by it. Qt and other
+ third-party libraries are bundled in /opt/ladybird.

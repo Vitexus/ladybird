@@ -1,0 +1,6 @@
+ladybird (2026.47.7-1) unstable; urgency=medium
+
+  * Initial unofficial Debian package of the Ladybird alpha 2026.47.7.
+  * Qt is built and bundled, as trixie only ships Qt 6.8.
+
+ -- CyberVitexus <info@vitexsoftware.cz>  Tue, 24 Nov 2026 02:10:05 +0100

@@ -1,0 +1,4 @@
+# Upstream's layout; Qt, ICU and other libraries are bundled on purpose.
+ladybird: dir-or-file-in-opt *
+ladybird: embedded-library *
+ladybird: custom-library-search-path *

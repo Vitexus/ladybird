@@ -1,0 +1,74 @@
+#!/usr/bin/make -f
+# Ladybird pins Rust (rust-toolchain.toml) newer than Debian's and needs
+# Qt >= 6.10, so rustup (like zellij/relate) and vcpkg-built Qt are used.
+# The build needs network access.
+export DH_VERBOSE = 1
+export RUSTUP_HOME = $(CURDIR)/debian/.rustup
+export CARGO_HOME = $(CURDIR)/debian/.cargo
+export VCPKG_ROOT = $(CURDIR)/Build/vcpkg-distribution
+export LADYBIRD_SOURCE_DIR = $(CURDIR)
+export CC = clang
+export CXX = clang++
+export PATH := $(CURDIR)/debian/.toolchain:$(CARGO_HOME)/bin:$(VCPKG_ROOT):$(PATH)
+
+# Optional persistent cache of vcpkg binaries (mounted by the Jenkinsfile)
+ifneq (,$(wildcard /var/cache/ladybird-vcpkg/.))
+export VCPKG_BINARY_SOURCES = files,/var/cache/ladybird-vcpkg,readwrite
+endif
+
+UPSTREAM_VERSION := $(shell dpkg-parsechangelog -S Version | sed 's/-.*//')
+# Commit of the upstream release tag, shown in the browser and metainfo
+UPSTREAM_COMMIT := 4e9acf4c02ca23239fe32224a303dcea4614562b
+comma := ,
+JOBS := $(or $(patsubst parallel=%,%,$(filter parallel=%,$(subst $(comma), ,$(DEB_BUILD_OPTIONS)))),4)
+export VCPKG_MAX_CONCURRENCY = $(JOBS)
+export CARGO_BUILD_JOBS = $(JOBS)
+PKG := $(CURDIR)/debian/ladybird
+# Upstream's own flags are tested; Debian's would leak into every component
+CLEANENV := env -u CFLAGS -u CXXFLAGS -u CPPFLAGS -u LDFLAGS -u DESTDIR
+TOOLS := clang clang++ lld ld.lld llvm-ar llvm-nm llvm-ranlib llvm-strip llvm-objcopy llvm-readelf llvm-symbolizer
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	mkdir -p debian/.toolchain
+	for t in $(TOOLS); do ln -sf /usr/bin/$$t-22 debian/.toolchain/$$t; done
+	echo $(UPSTREAM_COMMIT) > REVISION
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile minimal --default-toolchain none
+	rustup toolchain install $$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml) --profile minimal -c rustfmt -c clippy
+	PYTHONPATH=Meta python3 -c "import pathlib; from Utils.build_vcpkg import build_vcpkg; build_vcpkg(pathlib.Path('$(VCPKG_ROOT)'))"
+	$(CLEANENV) cmake --preset Distribution -B Build/distribution \
+	    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+	    -DCMAKE_INSTALL_PREFIX=/opt/ladybird \
+	    -DLADYBIRD_BUILD_QT=ON \
+	    -DLADYBIRD_VERSION=$(UPSTREAM_VERSION) \
+	    -DLADYBIRD_ENABLE_UPDATE_CHECK=OFF \
+	    -DLADYBIRD_GENERATE_SYMBOL_FILES=OFF \
+	    -DLADYBIRD_ENABLE_CCACHE=OFF \
+	    -DBUILD_TESTING=OFF \
+	    || { tail -n 80 Build/distribution/vcpkg-manifest-install.log; exit 1; }
+
+override_dh_auto_build:
+	$(CLEANENV) cmake --build Build/distribution -j$(JOBS)
+	$(CLEANENV) cmake --build Build/distribution --target third_party_sources
+
+override_dh_auto_test:
+
+override_dh_auto_install:
+	DESTDIR=$(PKG) cmake --install Build/distribution --strip --component ladybird_Runtime
+	DESTDIR=$(PKG) cmake --install Build/distribution --component ladybird_SystemIntegration
+	# Our builds are not official ones: say so in the AppStream metadata
+	sed -i 's|^\( *\)<summary>.*</summary>|\1<summary>Truly independent web browser (unofficial VitexSoftware build)</summary>|' \
+	    $(PKG)/usr/share/metainfo/org.ladybird.Ladybird.metainfo.xml
+
+# Private libraries, resolved through RUNPATH
+override_dh_makeshlibs:
+
+override_dh_shlibdeps:
+	dh_shlibdeps -l$(PKG)/opt/ladybird/lib
+
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
+
+override_dh_dwz:
